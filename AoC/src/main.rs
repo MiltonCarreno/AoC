@@ -8,7 +8,7 @@ fn main() {
             let mut sum = 0;
             for (i, l) in f.split('\n').enumerate() {
                 println!("\nLine #{i}: {l}");
-                let n = check_cubes(l.to_string());
+                let n = check_cubes_2(l.to_string());
                 println!("Num in line: {n}");
                 sum += n;
             }
@@ -19,6 +19,32 @@ fn main() {
     
 }
 
+// Day 2 Part 2
+fn check_cubes_2(line: String) -> i32 {
+    let line_info: Vec<&str> = line.split(":").collect();
+    let samples = line_info[1].to_string();
+    
+    let mut red = 1;
+    let mut green = 1;
+    let mut blue = 1;
+    for sample in samples.split(";") {
+        let _cubes: Vec<_> = sample.split(",").map(
+            |x| {
+                let cube: Vec<&str> = x.trim().split(" ").collect();
+                let color = cube[1];
+                let num = cube[0].to_string().parse::<i32>().unwrap();
+                match color {
+                    "red" if num > red => red = num,
+                    "green" if num > green => green = num,
+                    "blue" if num > blue => blue = num,
+                    _ => (),
+                }
+            }
+        ).collect();
+    }
+
+    return red * green * blue;
+}
 
 // Day 2 Part 1
 static RED: i32 = 12;
