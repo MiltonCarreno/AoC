@@ -1,6 +1,5 @@
 use std::fs::File;
 use std::fs;
-use std::io::Write;
 
 fn main() {
     let mut file = File::create("output.txt").unwrap();
@@ -9,7 +8,7 @@ fn main() {
             let mut sum = 0;
             for (i, l) in f.split('\n').enumerate() {
                 println!("\nLine #{i}: {l}");
-                let n = get_num_2(l.to_string());
+                let n = check_cubes(l.to_string());
                 println!("Num in line: {n}");
                 sum += n;
             }
@@ -20,6 +19,44 @@ fn main() {
     
 }
 
+
+// Day 2 Part 1
+static RED: i32 = 12;
+static GREEN: i32 = 13;
+static BLUE: i32 = 14;
+
+fn check_cubes(line: String) -> i32 {
+    let line_info: Vec<&str> = line.split(":").collect();
+    let game_num = line_info[0].to_string();
+    let samples = line_info[1].to_string();
+    
+    let mut sum: i32 = 0;
+    for sample in samples.split(";") {
+        let cubes: i32 = sample.split(",").map(
+            |x| {
+                let cube: Vec<&str> = x.trim().split(" ").collect();
+                let color = cube[1];
+                let num = cube[0].to_string().parse::<i32>().unwrap();
+                match color {
+                    "red" if num > RED => 1,
+                    "green" if num > GREEN => 1,
+                    "blue" if num > BLUE => 1,
+                    _ => 0,
+                }
+            }
+        ).sum();
+        sum += cubes;
+    }
+
+    if sum == 0 {
+        let n: Vec<&str>  = game_num.split(" ").collect();
+        return n[1].parse::<i32>().unwrap();
+    }
+    return 0;
+}
+
+// Day 1 Part 1
+
 fn get_num(line: String) -> i32 {
     let nums: Vec<char> = line.chars()
         .filter(|x| x.is_numeric()).collect();
@@ -27,6 +64,8 @@ fn get_num(line: String) -> i32 {
     let num = nums[0].to_string() + &nums[nums.len() - 1].to_string();
     return num.parse::<i32>().unwrap();
 }
+
+// Day 1 Part 2
 
 fn get_num_2(line: String) -> i32 {
     let mut nums = vec![];
