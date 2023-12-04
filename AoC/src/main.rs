@@ -1,3 +1,4 @@
+use core::num;
 use std::fs::File;
 use std::fs;
 use std::collections::HashMap;
@@ -6,30 +7,48 @@ fn main() {
     let mut file = File::create("output.txt").unwrap();
     match fs::read_to_string("input.txt") {
         Ok(f) => {
-            let mut nums: HashMap<String, Vec<Vec<(usize, usize)>>> = HashMap::new();
-            let mut symbols: Vec<(usize, usize)> = vec![];
             let mut sum = 0;
             for (idx, line) in f.split('\n').enumerate() {
                 println!("\nLine #{idx}: {line}");
-                let (
-                    row, 
-                    mut row_symbs,
-                    row_nums
-                ) = get_row_info2(line.to_string(), idx);
-                
-                symbols.append(&mut row_symbs);
-                // concat hashmap
-                merge_maps(&mut nums, row_nums);
+                let card_points = 
+                    calc_scatch_card(line.to_string());
+                sum += card_points;
             }
-            println!("map: {:#?}", nums);
-            println!("symbols: {:#?}", symbols);
             // calc value
-            let sum = calc_gears(nums, symbols);
             println!("\nTotal lines sum: {sum}")
         }
         Err(e) => println!("Error opening file: {e}")
     }
     
+}
+
+// Day 4 Part 1
+fn calc_scatch_card(line: String) -> usize {
+    let nums: Vec<&str> = line.split(":").last().unwrap().split("|").collect();
+    let winning_nums: Vec<&str> = nums[0].trim().split(" ").filter(|x| {
+        !x.is_empty()
+    }).collect();
+    let card_nums: Vec<&str> = nums[1].trim().split(" ").filter(|x| {
+        !x.is_empty()
+    }).collect();
+
+    println!("Winning Nums: {:#?}", winning_nums);
+    println!("Card Nums: {:#?}", card_nums);
+    let matches: usize = card_nums.iter().map(|x| {
+        match winning_nums.contains(x) {
+            true => 1,
+            false => 0,
+        }
+    }).sum();
+    let base: usize = 2;
+    let points = match matches {
+        0 => 0,
+        1 => 1,
+        _ => base.pow(matches as u32 -1),
+    };
+    println!("Matches: {}", matches);
+    println!("Card Points: {}", points);
+    return points;
 }
 
 // Day 3 Part 2
