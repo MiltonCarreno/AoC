@@ -1,4 +1,3 @@
-use core::num;
 use std::fs::File;
 use std::fs;
 use std::collections::HashMap;
@@ -8,14 +7,20 @@ fn main() {
     match fs::read_to_string("input.txt") {
         Ok(f) => {
             let mut sum = 0;
+            let mut cards: HashMap<usize, usize> = HashMap::new();
             for (idx, line) in f.split('\n').enumerate() {
                 println!("\nLine #{idx}: {line}");
-                let card_points = 
-                    calc_scatch_card(line.to_string());
-                sum += card_points;
+                match cards.get_mut(&idx) {
+                    Some(num) => *num += 1,
+                    None => {cards.insert(idx, 1);},
+                }
+                calc_scatch_card(line.to_string(), &idx, &mut cards);
+                
             }
             // calc value
-            println!("\nTotal lines sum: {sum}")
+            println!("\nTotal lines sum: {:#?}", cards);
+            sum = cards.values().sum();
+            println!("Sum: {}", sum);
         }
         Err(e) => println!("Error opening file: {e}")
     }
@@ -23,7 +28,9 @@ fn main() {
 }
 
 // Day 4 Part 1
-fn calc_scatch_card(line: String) -> usize {
+fn calc_scatch_card(
+    line: String, idx: &usize, cards: &mut HashMap<usize, usize>
+) {
     let nums: Vec<&str> = line.split(":").last().unwrap().split("|").collect();
     let winning_nums: Vec<&str> = nums[0].trim().split(" ").filter(|x| {
         !x.is_empty()
@@ -40,15 +47,20 @@ fn calc_scatch_card(line: String) -> usize {
             false => 0,
         }
     }).sum();
-    let base: usize = 2;
-    let points = match matches {
-        0 => 0,
-        1 => 1,
-        _ => base.pow(matches as u32 -1),
-    };
+    
     println!("Matches: {}", matches);
-    println!("Card Points: {}", points);
-    return points;
+    
+    let copies = cards.get(idx).unwrap().to_owned();
+
+    println!("Copies: {}", copies);
+    if matches > 0 {
+        for i in 1..=matches {
+            match cards.get_mut(&(idx+i)) {
+                Some(num) => {*num += (1*copies)},
+                None => {cards.insert(idx+i, 1*copies);},
+            }
+        }
+    }
 }
 
 // Day 3 Part 2
