@@ -15,7 +15,7 @@ fn main() {
                     row, 
                     mut row_symbs,
                     row_nums
-                ) = get_row_info(line.to_string(), idx);
+                ) = get_row_info2(line.to_string(), idx);
                 
                 symbols.append(&mut row_symbs);
                 // concat hashmap
@@ -24,12 +24,106 @@ fn main() {
             println!("map: {:#?}", nums);
             println!("symbols: {:#?}", symbols);
             // calc value
-            let sum = calc_parts(nums, symbols);
+            let sum = calc_gears(nums, symbols);
             println!("\nTotal lines sum: {sum}")
         }
         Err(e) => println!("Error opening file: {e}")
     }
     
+}
+
+// Day 3 Part 2
+fn get_row_info2(line: String, row_num: usize
+) -> (Vec<char>, Vec<(usize, usize)>, HashMap<String, Vec<Vec<(usize, usize)>>>) {
+    let row: Vec<char> = line.chars().collect();
+    let mut symbols: Vec<(usize, usize)> = vec![];
+    let mut nums: HashMap<String, Vec<Vec<(usize, usize)>>> = HashMap::new();
+    let mut c_idx: usize = 0;
+    while c_idx < row.len() {
+        if row[c_idx].is_numeric() {
+            let mut num: String = row[c_idx].to_string();
+            let mut digits: Vec<(usize, usize)> = vec![];
+            digits.push((row_num, c_idx));
+
+            let mut right = c_idx;
+            let mut found_right = false;
+
+            while !found_right {
+                if right+1 < row.len() && row[right+1].is_numeric() {
+                    num += &row[right+1].to_string();
+                    right += 1;
+                    digits.push((row_num, right));
+                } else {
+                    found_right = true;
+                }
+            }
+            if nums.contains_key(&num) {
+                let mut val = nums.get(&num).unwrap().to_vec();
+                val.push(digits);
+                nums.insert(num, val);
+            } else {
+                let mut val: Vec<Vec<(usize, usize)>> = vec![];
+                val.push(digits);
+                nums.insert(num, val);
+            }
+            c_idx = right + 1;
+        } else if row[c_idx] == '*' {
+            symbols.push((row_num, c_idx));
+            c_idx += 1;
+        } else {
+            c_idx += 1;
+        }
+    }
+
+    println!("{:#?}", nums);
+
+    return (row, symbols, nums);
+}
+
+fn calc_gears(
+    nums: HashMap<String, Vec<Vec<(usize, usize)>>>, 
+    symbols: Vec<(usize, usize)>
+) -> usize {
+    let mut sum: usize = 0;
+    for (row, col) in symbols {
+        let mut adj_nums = vec![];
+        for (num, coords) in &nums {
+            for val in coords {
+                let mut found_symbol =
+                    val.contains(&(row, col)) ||
+                    val.contains(&(row+1, col)) ||
+                    val.contains(&(row+1, col+1)) ||
+                    val.contains(&(row, col+1));
+
+                if row > 0 {
+                    found_symbol = found_symbol || 
+                        val.contains(&(row-1, col)) ||
+                        val.contains(&(row-1, col+1));
+                }
+                if col > 0 {
+                    found_symbol = found_symbol ||
+                        val.contains(&(row, col-1)) ||
+                        val.contains(&(row+1, col-1));
+                }
+                if row > 0 && col > 0 {
+                    found_symbol = found_symbol ||
+                        val.contains(&(row-1, col-1));
+                }
+    
+                match found_symbol {
+                    true => adj_nums.push(num.clone()),
+                    false => (),
+                }
+            }
+        }
+        if adj_nums.len() == 2 {
+            sum += 
+                adj_nums[0].parse::<usize>().unwrap() *
+                adj_nums[1].parse::<usize>().unwrap();
+        }
+    }
+
+    return sum;
 }
 
 // Day 3 Part 1
