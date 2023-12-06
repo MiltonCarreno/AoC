@@ -3,28 +3,135 @@ use std::fs;
 use std::collections::HashMap;
 
 fn main() {
-    let mut file = File::create("output.txt").unwrap();
     match fs::read_to_string("input.txt") {
         Ok(f) => {
-            let mut sum = 0;
-            let mut cards: HashMap<usize, usize> = HashMap::new();
-            for (idx, line) in f.split('\n').enumerate() {
-                println!("\nLine #{idx}: {line}");
-                match cards.get_mut(&idx) {
-                    Some(num) => *num += 1,
-                    None => {cards.insert(idx, 1);},
+            let mut seeds: Vec<usize> = vec![];
+            let mut map: HashMap<String, HashMap<(usize, usize), (usize, Oper)>> = HashMap::new();
+            let mut map_order: Vec<String> = vec![];
+            let mut current_key: String = "".to_string();
+
+            let lines: Vec<&str> = f.split('\n').filter(|
+                x| !x.is_empty()
+            ).collect();
+            for (idx, &line) in lines.iter().enumerate() {
+                // println!("\nLine #{idx}: {line}");
+                if idx == 0 {
+                    get_seeds(line.to_string(), &mut seeds);
+                    // println!("Seeds: {:#?}", seeds);
+                } else {
+                    match line.to_string().ends_with("map:") {
+                        true => {
+                            let map_line: Vec<&str> = line.split(" ").collect();
+                            map_order.push(map_line[0].to_string());
+                            current_key = map_line[0].to_string();
+                            // println!("this is a map title: |{}|", current_key);
+                        },
+                        false => {
+                            add_map_values(
+                                current_key.clone(),
+                                line.to_string(),
+                                &mut map
+                            )
+                        },
+                    }
                 }
-                calc_scatch_card(line.to_string(), &idx, &mut cards);
+                
                 
             }
+            // println!("Map order: {:#?}", map_order);
+            // println!("Mar: {:#?}", map);
             // calc value
-            println!("\nTotal lines sum: {:#?}", cards);
-            sum = cards.values().sum();
-            println!("Sum: {}", sum);
+            calc_lowest_dest(seeds, map_order, &mut map);
         }
         Err(e) => println!("Error opening file: {e}")
     }
     
+}
+
+// Day 5 Part 1
+fn get_seeds(line: String, seeds: &mut Vec<usize>) {
+    let seed_line: Vec<&str> = line.split(":").collect();
+    for seed in seed_line[1].trim().split(" ") {
+        seeds.push(seed.parse::<usize>().unwrap());
+    }
+}
+
+#[derive(Debug)]
+enum Oper {
+    Sub,
+    Add,
+}
+
+fn add_map_values(
+    map_name: String, values_line: String, 
+    map: &mut HashMap<String, HashMap<(usize, usize), (usize, Oper)>>
+) {
+    let mut convertion_map: HashMap<(usize, usize), (usize, Oper)> = HashMap::new();
+    let values: Vec<&str> = values_line.trim().split(" ").collect();
+    let dest = values[0].to_string().parse::<usize>().unwrap();
+    let orig = values[1].to_string().parse::<usize>().unwrap();
+    let range = values[2].to_string().parse::<usize>().unwrap() - 1;
+
+    let (min_orig, max_orig) = (orig, orig + range);
+    let convert_rate: (usize, Oper) = match orig > dest {
+        true => {
+            (orig.checked_sub(dest).unwrap(), Oper::Sub)
+        },
+        false => {
+            (dest.checked_sub(orig).unwrap(), Oper::Add)
+        },
+    };
+
+    convertion_map.insert((min_orig, max_orig), convert_rate);
+    
+    match map.contains_key(&map_name) {
+        true => {
+            for (k,v) in convertion_map {
+                map.get_mut(&map_name).unwrap().insert(k, v);
+            }
+        },
+        false => {
+            map.insert(map_name, convertion_map);
+        }
+    }
+}
+
+fn calc_lowest_dest(
+    seeds: Vec<usize>, order: Vec<String>, 
+    map: &mut HashMap<String, HashMap<(usize, usize), (usize, Oper)>>
+) {
+    let mut locations: Vec<(usize, usize)> = vec![];
+    for seed in seeds {
+        let mut converted_num = seed;
+        for current_map in &order {
+            let mut already_converted = false;
+            for ((min, max), (rate, oper)) in map.get(current_map).unwrap() {
+                let should_convert = !already_converted &&
+                    converted_num >= *min && converted_num <= *max;
+                if should_convert {
+                    match oper {
+                        Oper::Add => {
+                            already_converted = true;
+                            converted_num = converted_num.checked_add(*rate)
+                                .unwrap()
+                        },
+                        Oper::Sub => {
+                            already_converted = true;
+                            converted_num = converted_num.checked_sub(*rate)
+                            .unwrap()
+                        },
+                    }
+                }
+            }
+        }
+        locations.push((seed, converted_num));
+    }
+    println!("Converted: {:#?}", locations);
+    let lowest = locations.iter().map(
+        |(o,d)| {
+            *d
+    }).min().unwrap();
+    println!("Lowest Dest: {}", lowest);
 }
 
 // Day 4 Part 1
