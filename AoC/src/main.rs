@@ -41,7 +41,7 @@ fn main() {
             // println!("Map order: {:#?}", map_order);
             // println!("Mar: {:#?}", map);
             // calc value
-            // calc_lowest_dest2(seeds, map_order, &mut map);
+            calc_lowest_dest2(seeds, map_order, map);
         }
         Err(e) => println!("Error opening file: {e}")
     }
@@ -76,71 +76,95 @@ fn convert_num(
     };
 }
 
-// fn rec_convert_ranges(
-//     map: HashMap<(usize, usize), (usize, Oper)>, s_min: usize, s_max: usize
-// ) -> Vec<(usize, usize)> {
-//     let new_ranges: Vec<(usize, usize)> = vec![];
+fn rec_convert_ranges(
+    map: &HashMap<(usize, usize), (usize, Oper)>, s_min: usize, s_max: usize
+) -> Vec<(usize, usize)> {
+    let mut new_ranges: Vec<(usize, usize)> = vec![];
 
-//     for ((min, max), (rate, oper)) in map {
-//         // within range
-//         if min <= s_min && max >= s_max {
-//             new_ranges.push(convert_num(*s_min, *s_max, *rate, *oper));
-//         // top portion extra
-//         } else if min <= s_min && max < s_max {
-//             new_ranges.push(convert_num(*s_min, *max, *rate, *oper));
-//             // max + 1, s_max
-//             seed_rages.insert((max + 1, *s_max), true);
-//         // bottom portion extra
-//         } else if min > s_min && max >= s_max {
-//             *check = false;
-//             new_ranges.insert(
-//                 convert_num(*min, *s_max, *rate, *oper),
-//                 true
-//             );
-//             //  s_min, min - 1
-//             seed_rages.insert((*s_min, min - 1), true);
-//         // bottom and top extra portions
-//         } else if min > s_min && max < s_max {
-//             *check = false;
-//             new_ranges.insert(  // middle within range
-//                 convert_num(*min, *max, *rate, *oper),
-//                 true
-//             );
-//             // max + 1, s_max
-//             seed_rages.insert((max + 1, *s_max), true);
-//             // s_min, min - 1
-//             seed_rages.insert((*s_min, min - 1), true);
-//         } else {     // outside range (i.e. greater or lesser)
+    for (&(min, max), &(rate, oper)) in map {
+        let s_min_lower = min > s_min;
+        let s_max_higher = max < s_max;
+        let s_min_in_range = min <= s_min && s_min <= max;
+        let s_max_in_range = min <= s_max && s_max <= max;
+        if s_min_in_range && s_max_in_range { // within range
+            // println!("IN RANGE -- Min: {min}, Max: {max}, SMIN: {s_min}, SMAX: {s_max}");
+            // in range
+            new_ranges.push(convert_num(s_min, s_max, rate, oper));
+            return  new_ranges;
+        } else if s_min_in_range && s_max_higher { // top portion extra
+            // println!("EXTRA TOP -- Min: {min}, Max: {max}, SMIN: {s_min}, SMAX: {s_max}");
+            // bottom in range
+            new_ranges.push(convert_num(s_min, max, rate, oper));
+            // max + 1, s_max
+            new_ranges.append(
+                &mut rec_convert_ranges(map, max + 1, s_max)
+            );
+            return  new_ranges;
+        } else if s_min_lower && s_max_in_range { // bottom portion extra
+            // println!("EXTRA BOTTOM -- Min: {min}, Max: {max}, SMIN: {s_min}, SMAX: {s_max}");
+            // top in range
+            new_ranges.push(convert_num(min, s_max, rate, oper));
+            // s_min, min - 1
+            new_ranges.append(
+                &mut rec_convert_ranges(map, s_min, min - 1)
+            );
+            return  new_ranges;
+        } else if s_min_lower && s_max_higher { // bottom and top extra portions
+            // println!("EXTRA TOP&BOTTOM -- Min: {min}, Max: {max}, SMIN: {s_min}, SMAX: {s_max}");
+            // middle within range
+            new_ranges.push(convert_num(min, max, rate, oper));
+            // max + 1, s_max
+            new_ranges.append(
+                &mut rec_convert_ranges(map, max + 1, s_max)
+            );
+            // s_min, min - 1
+            new_ranges.append(
+                &mut rec_convert_ranges(map, s_min, min - 1)
+            );
+            return  new_ranges;
+        } else {     // outside range (i.e. greater or lesser)
+            // println!("NO MATCH");
 
-//         }
+        }
                 
             
-//         });
-//     }
+    }
 
-//     return new_ranges;
-// }
+    if new_ranges.len() == 0 {
+        new_ranges.push((s_min, s_max));
+    }
 
-// fn calc_lowest_dest2(
-//     seeds: Vec<(usize, usize)>, 
-//     map: &mut Vec<(usize, usize, usize, Oper)>
-// ) {
-//     let mut locations: Vec<(usize, usize)> = vec![];
+    return new_ranges;
+}
 
-//     for (seed_min, seed_max) in seeds {
-//         seed_rages.insert((seed_min, seed_max), true);
-//         for current_map in &order {
-            
-//         }
-//         locations.push((seed, seed_rages));
-//     }
-//     println!("Converted: {:#?}", locations);
-//     let lowest = locations.iter().map(
-//         |(o,d)| {
-//             *d
-//     }).min().unwrap();
-//     println!("Lowest Dest: {}", lowest);
-// }
+fn calc_lowest_dest2(
+    seeds: Vec<(usize, usize)>, order: Vec<String>,
+    map: HashMap<String, HashMap<(usize, usize), (usize, Oper)>>
+) {
+    let mut locations: Vec<(usize, usize)> = vec![];
+
+    for (seed_min, seed_max) in seeds {
+        let mut ranges: Vec<(usize, usize)> = vec![(seed_min, seed_max)];
+        for map_name in &order {
+            let mut converted_ranges = vec![];
+            for (s_min, s_max) in ranges {
+                converted_ranges.append(
+                    &mut rec_convert_ranges(
+                    map.get(map_name).unwrap(),
+                     s_min, s_max
+                ));
+            }
+            ranges = converted_ranges;
+        }
+        locations.append(&mut ranges);
+    }
+    // println!("Converted: {:#?}", locations);
+    let lowest = locations.iter().map(
+        |(o,d)| {
+            *o
+    }).min().unwrap();
+    println!("Lowest Dest: {}", lowest);
+}
 
 // Day 5 Part 1
 fn get_seeds(line: String, seeds: &mut Vec<usize>) {
@@ -150,7 +174,7 @@ fn get_seeds(line: String, seeds: &mut Vec<usize>) {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum Oper {
     Sub,
     Add,
