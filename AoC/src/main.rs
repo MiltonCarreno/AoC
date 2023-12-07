@@ -5,7 +5,7 @@ use std::collections::HashMap;
 fn main() {
     match fs::read_to_string("input.txt") {
         Ok(f) => {
-            let mut seeds: Vec<usize> = vec![];
+            let mut seeds: Vec<(usize,usize)> = vec![];
             let mut map: HashMap<String, HashMap<(usize, usize), (usize, Oper)>> = HashMap::new();
             let mut map_order: Vec<String> = vec![];
             let mut current_key: String = "".to_string();
@@ -16,8 +16,8 @@ fn main() {
             for (idx, &line) in lines.iter().enumerate() {
                 // println!("\nLine #{idx}: {line}");
                 if idx == 0 {
-                    get_seeds(line.to_string(), &mut seeds);
-                    // println!("Seeds: {:#?}", seeds);
+                    get_seeds2(line.to_string(), &mut seeds);
+                    println!("Seeds: {:#?}", seeds);
                 } else {
                     match line.to_string().ends_with("map:") {
                         true => {
@@ -41,12 +41,106 @@ fn main() {
             // println!("Map order: {:#?}", map_order);
             // println!("Mar: {:#?}", map);
             // calc value
-            calc_lowest_dest(seeds, map_order, &mut map);
+            // calc_lowest_dest2(seeds, map_order, &mut map);
         }
         Err(e) => println!("Error opening file: {e}")
     }
     
 }
+
+// Day 5 Part 2
+fn get_seeds2(line: String, seeds: &mut Vec<(usize,usize)>) {
+    let seed_line: Vec<&str> = line.split(":").collect();
+    let seed_nums: Vec<&str> = seed_line[1].trim().split(" ").collect();
+    let mut idx = 0;
+    while idx < seed_nums.len() {
+        let min = seed_nums[idx].parse::<usize>().unwrap();
+        let max = min + seed_nums[idx+1].parse::<usize>().unwrap() - 1;
+        seeds.push((min, max));
+        idx += 2;
+    }
+}
+
+fn convert_num(
+    min: usize, max: usize, rate: usize, oper: Oper
+) -> (usize, usize) {
+    return match oper {
+        Oper::Add => {
+            (min.checked_add(rate).unwrap(),
+            max.checked_add(rate).unwrap())
+        },
+        Oper::Sub => {
+            (min.checked_sub(rate).unwrap(),
+            max.checked_sub(rate).unwrap())
+        },
+    };
+}
+
+// fn rec_convert_ranges(
+//     map: HashMap<(usize, usize), (usize, Oper)>, s_min: usize, s_max: usize
+// ) -> Vec<(usize, usize)> {
+//     let new_ranges: Vec<(usize, usize)> = vec![];
+
+//     for ((min, max), (rate, oper)) in map {
+//         // within range
+//         if min <= s_min && max >= s_max {
+//             new_ranges.push(convert_num(*s_min, *s_max, *rate, *oper));
+//         // top portion extra
+//         } else if min <= s_min && max < s_max {
+//             new_ranges.push(convert_num(*s_min, *max, *rate, *oper));
+//             // max + 1, s_max
+//             seed_rages.insert((max + 1, *s_max), true);
+//         // bottom portion extra
+//         } else if min > s_min && max >= s_max {
+//             *check = false;
+//             new_ranges.insert(
+//                 convert_num(*min, *s_max, *rate, *oper),
+//                 true
+//             );
+//             //  s_min, min - 1
+//             seed_rages.insert((*s_min, min - 1), true);
+//         // bottom and top extra portions
+//         } else if min > s_min && max < s_max {
+//             *check = false;
+//             new_ranges.insert(  // middle within range
+//                 convert_num(*min, *max, *rate, *oper),
+//                 true
+//             );
+//             // max + 1, s_max
+//             seed_rages.insert((max + 1, *s_max), true);
+//             // s_min, min - 1
+//             seed_rages.insert((*s_min, min - 1), true);
+//         } else {     // outside range (i.e. greater or lesser)
+
+//         }
+                
+            
+//         });
+//     }
+
+//     return new_ranges;
+// }
+
+// fn calc_lowest_dest2(
+//     seeds: Vec<(usize, usize)>, 
+//     map: &mut Vec<(usize, usize, usize, Oper)>
+// ) {
+//     let mut locations: Vec<(usize, usize)> = vec![];
+
+//     for (seed_min, seed_max) in seeds {
+//         seed_rages.insert((seed_min, seed_max), true);
+//         for current_map in &order {
+            
+//         }
+//         locations.push((seed, seed_rages));
+//     }
+//     println!("Converted: {:#?}", locations);
+//     let lowest = locations.iter().map(
+//         |(o,d)| {
+//             *d
+//     }).min().unwrap();
+//     println!("Lowest Dest: {}", lowest);
+// }
 
 // Day 5 Part 1
 fn get_seeds(line: String, seeds: &mut Vec<usize>) {
