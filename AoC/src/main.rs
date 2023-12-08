@@ -5,47 +5,67 @@ use std::collections::HashMap;
 fn main() {
     match fs::read_to_string("input.txt") {
         Ok(f) => {
-            let mut seeds: Vec<(usize,usize)> = vec![];
-            let mut map: HashMap<String, HashMap<(usize, usize), (usize, Oper)>> = HashMap::new();
-            let mut map_order: Vec<String> = vec![];
-            let mut current_key: String = "".to_string();
-
-            let lines: Vec<&str> = f.split('\n').filter(|
-                x| !x.is_empty()
-            ).collect();
+            let lines: Vec<&str> = f.split('\n')
+                .filter(|x| !x.is_empty()).collect();
+        
+            let mut num_ways: usize = 1;
+            let mut times: Vec<usize> = vec![];
+            let mut distance: Vec<usize> = vec![];
             for (idx, &line) in lines.iter().enumerate() {
                 // println!("\nLine #{idx}: {line}");
-                if idx == 0 {
-                    get_seeds2(line.to_string(), &mut seeds);
-                    println!("Seeds: {:#?}", seeds);
-                } else {
-                    match line.to_string().ends_with("map:") {
-                        true => {
-                            let map_line: Vec<&str> = line.split(" ").collect();
-                            map_order.push(map_line[0].to_string());
-                            current_key = map_line[0].to_string();
-                            // println!("this is a map title: |{}|", current_key);
-                        },
-                        false => {
-                            add_map_values(
-                                current_key.clone(),
-                                line.to_string(),
-                                &mut map
-                            )
-                        },
-                    }
+                match line.to_string().starts_with("Time:") {
+                    true => {
+                        times.append(
+                            &mut line
+                            .split(":").nth(1).unwrap().split(" ")
+                            .filter(|x| !x.is_empty())
+                            .map(|x| x.parse::<usize>().unwrap()).collect()
+                        );
+        
+                    },
+                    false => {                        
+                        distance.append( 
+                            &mut line
+                            .split(":").nth(1).unwrap().split(" ")
+                            .filter(|x| !x.is_empty())
+                            .map(|x| x.parse::<usize>().unwrap()).collect()
+                        );
+        
+                    },
                 }
-                
-                
             }
-            // println!("Map order: {:#?}", map_order);
-            // println!("Mar: {:#?}", map);
-            // calc value
-            calc_lowest_dest2(seeds, map_order, map);
+            println!("times: {:#?}", times);
+            println!("distance: {:#?}", distance);
+            calc_ways(times, distance);
         }
         Err(e) => println!("Error opening file: {e}")
     }
     
+}
+
+// Day 6 Part 2
+fn calc_ways2(time: String, distance: String) {
+// .fold("".to_string(), |acc, x| acc + x);
+}
+
+// Day 6 Part 1
+fn calc_ways(times: Vec<usize>, distance: Vec<usize>) {
+    let ways: Vec<usize> = times.iter().enumerate().map(
+        |(idx, &time)| {
+            let mut ways: usize = 0;
+            for i in 1..time {
+                if i * (time - i) > distance[idx] {
+                    ways += 1;
+                }
+            }
+            ways
+        }
+    ).collect();
+
+    println!("Ways: {:#?}", ways);
+
+    let total_ways = ways.iter().fold(1, |acc, x| acc * x);
+    println!("Total ways: {:#?}", total_ways);
 }
 
 // Day 5 Part 2
