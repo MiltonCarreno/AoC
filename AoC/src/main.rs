@@ -9,34 +9,31 @@ fn main() {
                 .filter(|x| !x.is_empty()).collect();
         
             let mut num_ways: usize = 1;
-            let mut times: Vec<usize> = vec![];
-            let mut distance: Vec<usize> = vec![];
+            let mut time: String = "".to_string();
+            let mut distance: String = "".to_string();
             for (idx, &line) in lines.iter().enumerate() {
                 // println!("\nLine #{idx}: {line}");
                 match line.to_string().starts_with("Time:") {
                     true => {
-                        times.append(
-                            &mut line
+                        time = line
                             .split(":").nth(1).unwrap().split(" ")
                             .filter(|x| !x.is_empty())
-                            .map(|x| x.parse::<usize>().unwrap()).collect()
-                        );
+                            .fold("".to_string(), |acc, x| acc + x);
         
                     },
                     false => {                        
-                        distance.append( 
-                            &mut line
+                        distance = line
                             .split(":").nth(1).unwrap().split(" ")
                             .filter(|x| !x.is_empty())
-                            .map(|x| x.parse::<usize>().unwrap()).collect()
-                        );
+                            .fold("".to_string(), |acc, x| acc + x);
+                    
         
                     },
                 }
             }
-            println!("times: {:#?}", times);
-            println!("distance: {:#?}", distance);
-            calc_ways(times, distance);
+            // println!("times: {:#?}", time);
+            // println!("distance: {:#?}", distance);
+            calc_ways2(time, distance);
         }
         Err(e) => println!("Error opening file: {e}")
     }
@@ -45,7 +42,19 @@ fn main() {
 
 // Day 6 Part 2
 fn calc_ways2(time: String, distance: String) {
-// .fold("".to_string(), |acc, x| acc + x);
+    let t = time.parse::<usize>().unwrap();
+    let d = distance.parse::<usize>().unwrap();
+    let mut ways: usize = 0;
+
+    println!("times: {:#?}", t);
+    println!("distance: {:#?}", d);
+
+    for i in 1..t {
+        if i * (t - i) > d {
+            ways += 1;
+        }
+    }
+    println!("Ways: {:#?}", ways);
 }
 
 // Day 6 Part 1
