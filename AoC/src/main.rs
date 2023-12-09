@@ -7,37 +7,73 @@ fn main() {
         Ok(f) => {
             let lines: Vec<&str> = f.split('\n')
                 .filter(|x| !x.is_empty()).collect();
-        
-            let mut num_ways: usize = 1;
-            let mut time: String = "".to_string();
-            let mut distance: String = "".to_string();
+            let mut five: HashMap<usize,usize> = HashMap::new();
+            let mut four: HashMap<usize,usize> = HashMap::new();
+            let mut full: HashMap<usize,usize> = HashMap::new();
+            let mut three: HashMap<usize,usize> = HashMap::new();
+            let mut two: HashMap<usize,usize> = HashMap::new();
+            let mut one: HashMap<usize,usize> = HashMap::new();
+            let mut high: HashMap<usize,usize> = HashMap::new();
+            let mut maps: Vec<HashMap<usize, usize>> = vec![
+                five, four, full, three, two, one, high
+            ];
+            
             for (idx, &line) in lines.iter().enumerate() {
                 // println!("\nLine #{idx}: {line}");
-                match line.to_string().starts_with("Time:") {
-                    true => {
-                        time = line
-                            .split(":").nth(1).unwrap().split(" ")
-                            .filter(|x| !x.is_empty())
-                            .fold("".to_string(), |acc, x| acc + x);
-        
-                    },
-                    false => {                        
-                        distance = line
-                            .split(":").nth(1).unwrap().split(" ")
-                            .filter(|x| !x.is_empty())
-                            .fold("".to_string(), |acc, x| acc + x);
-                    
-        
-                    },
-                }
+                calc_type(line.to_string(), &mut maps);
             }
-            // println!("times: {:#?}", time);
-            // println!("distance: {:#?}", distance);
-            calc_ways2(time, distance);
+            println!("five: {:#?}", maps[0]);
+            println!("four: {:#?}", maps[1]);
+            println!("full: {:#?}", maps[2]);
+            println!("three: {:#?}", maps[3]);
+            println!("two: {:#?}", maps[4]);
+            println!("one: {:#?}", maps[5]);
+            println!("high: {:#?}", maps[6]);
+            
         }
         Err(e) => println!("Error opening file: {e}")
     }
     
+}
+
+// Day 7 Part 1
+fn calc_type(line: String, maps: &mut Vec<HashMap<usize, usize>>) {
+    let info: Vec<&str> = line.split(" ").collect();
+    let mut hand: HashMap<char, usize> = HashMap::new();
+    let val = info[1].parse::<usize>().unwrap();
+
+    for c in info[0].chars() {
+        if let Some(x) = hand.get_mut(&c) {
+            *x += 1;
+        } else {
+            hand.insert(c, 1);
+        }
+    }
+
+    match hand.len() {
+        1 => maps[0].insert(val, val),
+        2 => {
+            let max = hand.iter()
+                .map(|(k,v)| v).max().unwrap();
+            match *max {
+                4 => maps[1].insert(val, val),
+                3 => maps[2].insert(val, val),
+                _ => Option::None,
+            }
+        },
+        3 => {
+            let max = hand.iter()
+                .map(|(k,v)| v).max().unwrap();
+            match *max {
+                3 => maps[3].insert(val, val),
+                2 => maps[4].insert(val, val),
+                _ => Option::None,
+            }
+        },
+        4 => maps[5].insert(val, val),
+        5 => maps[6].insert(val, val),
+        _ => Option::None,
+    };
 }
 
 // Day 6 Part 2
