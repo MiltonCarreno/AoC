@@ -37,19 +37,43 @@ fn main() {
     
 }
 
-// Day 7 Part 1
+// Day 7 Part 1 and 2
 fn calc_type(line: String, maps: &mut Vec<HashMap<usize, usize>>) {
     let info: Vec<&str> = line.split(" ").collect();
     let mut hand: HashMap<char, usize> = HashMap::new();
     let val = info[1].parse::<usize>().unwrap();
+    let mut j = 0;
 
     for c in info[0].chars() {
         if let Some(x) = hand.get_mut(&c) {
             *x += 1;
         } else {
-            hand.insert(c, 1);
+            match c {
+                'J' => {j += 1;},
+                _ => {hand.insert(c, 1);},
+            }
         }
     }
+
+    if j == 5 {
+        hand.insert('J', 5);
+        j = 0;
+    }
+
+    let (&max_k, &max_v) = hand.iter().max_by_key(|(k,v)| {*v}).unwrap();
+    println!("Hand: {:#?}", hand);
+    println!("Max val: {:#?}, {}", max_k, max_v);
+    println!("J: {j}");
+
+    match j > 0 {
+        true => {
+            if let Some(x) = hand.get_mut(&max_k) {
+                *x += j;
+            }
+        },
+        false => (),
+    }
+    println!("Enhanced Hand: {:#?}", hand);
 
     let num = calc_num(info[0].to_string());
     match hand.len() {
@@ -85,7 +109,7 @@ fn calc_num(num_str: String) -> usize {
             'A' => 14,
             'K' => 13,
             'Q' => 12,
-            'J' => 11,
+            'J' => 1,
             'T' => 10,
             '0'..='9' => card.to_string().parse::<usize>().unwrap(),
             _ => 0,
