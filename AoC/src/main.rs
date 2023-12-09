@@ -7,34 +7,75 @@ fn main() {
         Ok(f) => {
             let lines: Vec<&str> = f.split('\n')
                 .filter(|x| !x.is_empty()).collect();
-            let mut five: HashMap<usize,usize> = HashMap::new();
-            let mut four: HashMap<usize,usize> = HashMap::new();
-            let mut full: HashMap<usize,usize> = HashMap::new();
-            let mut three: HashMap<usize,usize> = HashMap::new();
-            let mut two: HashMap<usize,usize> = HashMap::new();
-            let mut one: HashMap<usize,usize> = HashMap::new();
-            let mut high: HashMap<usize,usize> = HashMap::new();
-            let mut maps: Vec<HashMap<usize, usize>> = vec![
-                five, four, full, three, two, one, high
-            ];
-            
+
+            let mut steps: Vec<usize> = vec![];
+            let mut map: HashMap<String, (String, String)> = HashMap::new();
             for (idx, &line) in lines.iter().enumerate() {
                 // println!("\nLine #{idx}: {line}");
-                calc_type(line.to_string(), &mut maps);
+                match idx {
+                    0 => get_steps(line.to_string(), &mut steps),
+                    _ => get_map(line.to_string(), &mut map),
+                }
+                
             }
-            println!("five: {:#?}", maps[0]);
-            println!("four: {:#?}", maps[1]);
-            println!("full: {:#?}", maps[2]);
-            println!("three: {:#?}", maps[3]);
-            println!("two: {:#?}", maps[4]);
-            println!("one: {:#?}", maps[5]);
-            println!("high: {:#?}", maps[6]);
-            calc_prod(&mut maps);
+            println!("Map: {:#?}", map);
+            println!("Steps: {:#?}", steps);
+            calc_steps(steps, map);
+            
             
         }
         Err(e) => println!("Error opening file: {e}")
     }
     
+}
+
+// Day 8 Part 1
+fn get_steps(line: String, steps: &mut Vec<usize>) {
+    for ch in line.chars() {
+        match ch {
+            'R' => steps.push(1),
+            'L' => steps.push(0),
+            _ => (),
+        }
+    }
+}
+
+fn get_map(line: String, map: &mut HashMap<String, (String, String)>) {
+    let info: Vec<&str> = line.split("=").collect();
+    let key = info[0].trim().to_string();
+    let mut con= info[1].trim()
+        .replace("(", "").replace(")", "")
+        .replace(" ", "");
+    let vals: Vec<&str> = con.split(",").collect();
+
+    // println!("key: {key}, val: {:#?}", vals);
+    map.insert(key, (vals[0].to_string(), vals[1].to_string()));
+}
+
+fn calc_steps(steps: Vec<usize>, map: HashMap<String, (String, String)>) {
+    let mut num_steps = 1;
+    let mut idx = 0;
+    
+    let mut val = match steps[idx] {
+        0 => &map["AAA"].0,
+        1 => &map["AAA"].1,
+        _ => "WRONG",
+    };
+
+    while val != "ZZZ" {
+        match idx == steps.len()-1 {
+            true => idx = 0,
+            false => idx += 1,
+        }
+        num_steps += 1;
+        val = match steps[idx] {
+            0 => &map[val].0,
+            1 => &map[val].1,
+            _ => "WRONG",
+        };
+    }
+
+    println!("Num Steps: {num_steps}");
 }
 
 // Day 7 Part 1 and 2
