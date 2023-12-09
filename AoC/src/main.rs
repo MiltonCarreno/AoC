@@ -29,6 +29,7 @@ fn main() {
             println!("two: {:#?}", maps[4]);
             println!("one: {:#?}", maps[5]);
             println!("high: {:#?}", maps[6]);
+            calc_prod(&mut maps);
             
         }
         Err(e) => println!("Error opening file: {e}")
@@ -50,14 +51,15 @@ fn calc_type(line: String, maps: &mut Vec<HashMap<usize, usize>>) {
         }
     }
 
+    let num = calc_num(info[0].to_string());
     match hand.len() {
-        1 => maps[0].insert(val, val),
+        1 => maps[0].insert(num, val),
         2 => {
             let max = hand.iter()
                 .map(|(k,v)| v).max().unwrap();
             match *max {
-                4 => maps[1].insert(val, val),
-                3 => maps[2].insert(val, val),
+                4 => maps[1].insert(num, val),
+                3 => maps[2].insert(num, val),
                 _ => Option::None,
             }
         },
@@ -65,15 +67,56 @@ fn calc_type(line: String, maps: &mut Vec<HashMap<usize, usize>>) {
             let max = hand.iter()
                 .map(|(k,v)| v).max().unwrap();
             match *max {
-                3 => maps[3].insert(val, val),
-                2 => maps[4].insert(val, val),
+                3 => maps[3].insert(num, val),
+                2 => maps[4].insert(num, val),
                 _ => Option::None,
             }
         },
-        4 => maps[5].insert(val, val),
-        5 => maps[6].insert(val, val),
+        4 => maps[5].insert(num, val),
+        5 => maps[6].insert(num, val),
         _ => Option::None,
     };
+}
+
+fn calc_num(num_str: String) -> usize {
+    let mut num = 0;
+    for (idx, card) in num_str.chars().rev().enumerate() {
+        let digit = match card {
+            'A' => 14,
+            'K' => 13,
+            'Q' => 12,
+            'J' => 11,
+            'T' => 10,
+            '0'..='9' => card.to_string().parse::<usize>().unwrap(),
+            _ => 0,
+        };
+        num += 15usize.pow(idx as u32) * digit;
+    }
+    return num;
+}
+
+fn calc_prod(maps: &mut Vec<HashMap<usize, usize>>) {
+    let mut num = 0;
+    let mut idx = 1;
+    maps.reverse();
+    for map_idx in 0..maps.len() {
+        let mut order: Vec<usize> = vec![];
+        for (&num, val) in &maps[map_idx] {
+            order.push(num);
+        }
+        order.sort();
+        // println!("Map: {:#?}", maps[map_idx]);
+        // println!("{map_idx} Order: {:#?}", order);
+        
+        for key in order {
+            let val = maps[map_idx].get(&key).unwrap();
+            println!("{idx} * {val}");
+            num += idx * val;
+            idx += 1;
+        }
+        // println!("Num: {num}");
+    }
+    println!("Total: {}", num);
 }
 
 // Day 6 Part 2
