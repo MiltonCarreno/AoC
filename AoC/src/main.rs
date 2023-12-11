@@ -8,25 +8,66 @@ fn main() {
             let lines: Vec<&str> = f.split('\n')
                 .filter(|x| !x.is_empty()).collect();
 
+            let mut starts: Vec<String> = vec![];
             let mut steps: Vec<usize> = vec![];
             let mut map: HashMap<String, (String, String)> = HashMap::new();
             for (idx, &line) in lines.iter().enumerate() {
                 // println!("\nLine #{idx}: {line}");
                 match idx {
                     0 => get_steps(line.to_string(), &mut steps),
-                    _ => get_map(line.to_string(), &mut map),
+                    _ => get_map(line.to_string(), &mut starts, &mut map),
                 }
                 
             }
-            println!("Map: {:#?}", map);
-            println!("Steps: {:#?}", steps);
-            calc_steps(steps, map);
+            // println!("Map: {:#?}", map);
+            println!("Starts: {:#?}", starts);
+            // println!("Steps: {:#?}", steps);
+            calc_steps2(steps, starts, map);
             
             
         }
         Err(e) => println!("Error opening file: {e}")
     }
     
+}
+
+// Day 8 Part 2
+fn calc_steps2(
+    steps: Vec<usize>, starts: Vec<String>, 
+    map: HashMap<String, (String, String)>
+) {
+    let mut num_steps = 0;
+    let mut idx = 0;
+    let mut all_end: bool = false;
+    let mut curr_node = starts;
+   
+    while !all_end {
+        all_end = true;
+        let mut next_nodes: Vec<String> = vec![];
+        for node in &curr_node {
+            match steps[idx] {
+                0 => {
+                    next_nodes.push(map[node].0.clone());
+                    all_end = all_end && map[node].0.ends_with("Z");
+                },
+                1 => {
+                    next_nodes.push(map[node].1.clone());
+                    all_end = all_end && map[node].1.ends_with("Z");
+                },
+                _ => (),
+            }
+        }
+        
+        curr_node = next_nodes;
+
+        match idx == steps.len()-1 {
+            true => idx = 0,
+            false => idx += 1,
+        }
+        num_steps += 1;
+    }
+
+    println!("Num Steps: {num_steps}");
 }
 
 // Day 8 Part 1
@@ -40,9 +81,14 @@ fn get_steps(line: String, steps: &mut Vec<usize>) {
     }
 }
 
-fn get_map(line: String, map: &mut HashMap<String, (String, String)>) {
+fn get_map(line: String, starts: &mut Vec<String>, map: &mut HashMap<String, (String, String)>) {
     let info: Vec<&str> = line.split("=").collect();
     let key = info[0].trim().to_string();
+
+    if key.ends_with("A") {
+        starts.push(key.clone());
+    }
+
     let mut con= info[1].trim()
         .replace("(", "").replace(")", "")
         .replace(" ", "");
