@@ -40,19 +40,55 @@ fn calc_steps2(
     let mut idx = 0;
     let mut all_end: bool = false;
     let mut curr_node = starts;
-   
+    let mut steps_to_end: HashMap<String, usize> = HashMap::new();
+    let mut steps_to_loop: HashMap<String, usize> = HashMap::new();
+
     while !all_end {
         all_end = true;
         let mut next_nodes: Vec<String> = vec![];
         for node in &curr_node {
             match steps[idx] {
-                0 => {
-                    next_nodes.push(map[node].0.clone());
-                    all_end = all_end && map[node].0.ends_with("Z");
+                0 if map[node].0.ends_with("Z") => {
+                    if steps_to_end.contains_key(&map[node].0) {
+                        let dif = steps_to_end
+                            .get(&map[node].0).unwrap().clone();
+
+                        steps_to_loop.insert(
+                            map[node].0.clone(), num_steps - dif
+                        );
+                        all_end = all_end && true;
+                    } else {
+                        steps_to_end.insert(
+                            map[node].0.clone(),num_steps.clone()
+                        );
+                        next_nodes.push(map[node].0.clone());
+                        all_end = all_end && false;
+                    }
                 },
-                1 => {
-                    next_nodes.push(map[node].1.clone());
-                    all_end = all_end && map[node].1.ends_with("Z");
+                0 => { 
+                    next_nodes.push(map[node].0.clone()); 
+                    all_end = all_end && false;
+                },
+                1 if map[node].1.ends_with("Z") => {
+                    if steps_to_end.contains_key(&map[node].1) {
+                        let dif = steps_to_end
+                            .get(&map[node].1).unwrap().clone();
+
+                        steps_to_loop.insert(
+                            map[node].1.clone(), num_steps - dif
+                        );
+                        all_end = all_end && true;
+                    } else {
+                        steps_to_end.insert(
+                            map[node].1.clone(),num_steps.clone()
+                        );
+                        next_nodes.push(map[node].1.clone());
+                        all_end = all_end && false;
+                    }
+                },
+                1 => { 
+                    next_nodes.push(map[node].1.clone()); 
+                    all_end = all_end && false;
                 },
                 _ => (),
             }
@@ -67,7 +103,7 @@ fn calc_steps2(
         num_steps += 1;
     }
 
-    println!("Num Steps: {num_steps}");
+    println!("S_LOOP: {:#?}", steps_to_loop);
 }
 
 // Day 8 Part 1
